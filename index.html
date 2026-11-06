@@ -1,0 +1,1653 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#18211d">
+  <title>Calculadora de Imbuement</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202a25;
+      --muted: #788078;
+      --line: #e0e4dc;
+      --paper: #f5f5ef;
+      --panel: #fffefa;
+      --forest: #244b3b;
+      --lime: #d6f36a;
+      --coral: #e17b5d;
+      --soft-green: #eaf0e8;
+      --display: Georgia, "Times New Roman", serif;
+      --body: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      height: 66px;
+      background: var(--forest);
+      color: #f8f8ee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 max(28px, calc((100vw - 1180px) / 2));
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0; }
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      color: var(--forest);
+      background: var(--lime);
+      font-family: var(--display);
+      font-size: 18px;
+      border-radius: 2px;
+    }
+    .top-note { color: #c1cfc3; font-size: 12px; }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 42px 28px 64px; }
+    .heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 27px; }
+    .eyebrow { color: #66836f; font-size: 11px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; margin: 0 0 9px; }
+    h1 { font-family: var(--display); font-size: 38px; line-height: 1.08; font-weight: 500; margin: 0; letter-spacing: 0; }
+    .saved { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 8px; padding-bottom: 5px; white-space: nowrap; }
+    .saved::before { content: ""; width: 7px; height: 7px; background: #83a76f; border-radius: 50%; }
+
+    .summary { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 22px; }
+    .metric { background: var(--panel); padding: 19px 22px 18px; min-height: 105px; }
+    .metric.primary { background: var(--lime); }
+    .metric-label { color: #647064; font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; margin-bottom: 13px; }
+    .metric.primary .metric-label { color: #40532c; }
+    .metric-value { font-family: var(--display); font-size: 30px; line-height: 1; white-space: nowrap; }
+    .metric-unit { font: 600 12px var(--body); margin-left: 5px; }
+
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
+    .materials-panel, .settings-panel { background: var(--panel); border: 1px solid var(--line); }
+    .panel-heading { display: flex; justify-content: space-between; align-items: center; padding: 19px 22px; border-bottom: 1px solid var(--line); }
+    h2 { font-size: 15px; margin: 0; font-weight: 700; }
+    .count { color: var(--muted); font-size: 12px; margin-left: 8px; font-weight: 400; }
+    .add-button {
+      border: 0;
+      background: var(--forest);
+      color: white;
+      min-height: 36px;
+      padding: 0 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .add-button:hover { background: #32614d; }
+    .plus { font-size: 18px; line-height: 1; font-weight: 400; }
+
+    .table-head, .material-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) 84px 118px 118px 28px;
+      gap: 12px;
+      align-items: center;
+    }
+    .table-head { padding: 12px 22px 9px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+    .table-head span:not(:first-child) { text-align: right; }
+    .rows { padding: 0 22px; }
+    .material-row { min-height: 65px; border-top: 1px solid #edf0e9; }
+    .material-row:first-child { border-top: 0; }
+    .field-wrap { min-width: 0; }
+    .mobile-label { display: none; }
+    .material-row input {
+      width: 100%;
+      min-width: 0;
+      height: 36px;
+      border: 1px solid #dfe4dc;
+      border-radius: 2px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 9px;
+      outline: none;
+    }
+    .material-row input:focus, .setting input:focus { border-color: #7c9a69; box-shadow: 0 0 0 2px #e6efd9; }
+    .material-row input[type="number"] { text-align: right; }
+    .row-total { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; }
+    .remove-button {
+      width: 28px;
+      height: 30px;
+      border: 0;
+      background: transparent;
+      color: #929a91;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .remove-button:hover { color: var(--coral); }
+    .materials-footer { border-top: 1px solid var(--line); margin-top: 3px; padding: 15px 22px; display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+    .materials-footer strong { color: var(--ink); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    .settings-panel { padding: 20px; }
+    .settings-panel h2 { margin: 0 0 20px; }
+    .setting { margin-bottom: 17px; }
+    .setting label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 7px; font-size: 12px; font-weight: 650; }
+    .setting label span { color: var(--muted); font-size: 11px; font-weight: 400; }
+    .setting input { width: 100%; height: 39px; border: 1px solid #dfe4dc; border-radius: 2px; background: #fff; padding: 0 10px; outline: none; }
+    .setting input[type="number"] { font-variant-numeric: tabular-nums; }
+    .divider { height: 1px; background: var(--line); margin: 20px 0 15px; }
+    .breakdown { display: grid; gap: 11px; }
+    .breakdown-line { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+    .breakdown-line strong { color: var(--ink); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .breakdown-line.total { color: var(--ink); font-weight: 700; padding-top: 11px; border-top: 1px solid var(--line); }
+    .breakdown-line.total strong { color: var(--forest); }
+    .footnote { margin: 18px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+    .global-settings { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 16px 20px; background: var(--soft-green); margin-bottom: 20px; }
+    .global-settings strong { font-size: 13px; }
+    .global-settings p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .global-settings label { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 650; white-space: nowrap; }
+    .global-settings input, .weapon-name, .fee-input {
+      height: 36px;
+      border: 1px solid #dfe4dc;
+      border-radius: 2px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 9px;
+      outline: none;
+    }
+    .global-settings input { width: 100px; }
+    .global-settings input:focus, .weapon-name:focus, .fee-input:focus { border-color: #7c9a69; box-shadow: 0 0 0 2px #e6efd9; }
+    .category-grid, .weapons-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .equipment-card { min-width: 0; background: var(--panel); border: 1px solid var(--line); padding: 17px; }
+    .equipment-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+    .equipment-heading h3 { margin: 0; font-size: 14px; }
+    .equipment-hourly { color: var(--forest); font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .weapon-name { width: min(100%, 220px); font-weight: 650; }
+    .item-header, .item-row { display: grid; grid-template-columns: minmax(90px, 1fr) 56px minmax(78px, .75fr) minmax(78px, .75fr) 26px; gap: 8px; align-items: center; }
+    .item-header { padding: 12px 0 7px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+    .item-header span:not(:first-child) { text-align: right; }
+    .item-row { min-height: 51px; border-top: 1px solid #edf0e9; }
+    .item-row:first-child { border-top: 0; }
+    .item-row input { width: 100%; min-width: 0; height: 33px; border: 1px solid #dfe4dc; border-radius: 2px; padding: 0 7px; outline: none; }
+    .item-row input:focus { border-color: #7c9a69; box-shadow: 0 0 0 2px #e6efd9; }
+    .item-row input[type="number"] { text-align: right; }
+    .item-row-total { text-align: right; font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .item-row .remove-button { width: 26px; }
+    .item-list:empty::after { content: "Nenhum material adicionado"; display: block; padding: 12px 0; color: var(--muted); font-size: 11px; }
+    .equipment-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .equipment-fee { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .fee-input { width: 90px; height: 32px; text-align: right; font-size: 12px; }
+    .small-button { border: 1px solid var(--line); background: transparent; color: var(--forest); min-height: 32px; padding: 0 9px; font-size: 11px; font-weight: 650; white-space: nowrap; }
+    .small-button:hover { background: var(--soft-green); }
+    .small-button.remove-weapon { color: #a64e38; }
+    .weapon-section { margin: 24px 0; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 13px; }
+    .section-heading h2 { font-size: 18px; }
+    .weapon-count { color: var(--muted); font-size: 12px; font-weight: 400; margin-left: 7px; }
+    .section-heading .add-button { flex: 0 0 auto; }
+
+    @media (max-width: 800px) {
+      main { padding: 32px 20px 48px; }
+      .workspace { grid-template-columns: 1fr; }
+      .settings-panel { display: grid; grid-template-columns: 1fr 1fr; column-gap: 22px; }
+      .settings-panel h2, .settings-panel .divider, .settings-panel .breakdown, .settings-panel .footnote { grid-column: 1 / -1; }
+      .settings-panel .divider { margin: 2px 0 15px; }
+    }
+    @media (max-width: 560px) {
+      .topbar { height: 58px; padding: 0 18px; }
+      .top-note { font-size: 11px; }
+      main { padding: 27px 14px 36px; }
+      .heading { align-items: start; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+      h1 { font-size: 33px; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      .metric { min-height: 88px; padding: 14px; }
+      .metric.primary { grid-column: 1 / -1; }
+      .metric-value { font-size: 25px; }
+      .panel-heading { padding: 15px; }
+      .table-head { display: none; }
+      .rows { padding: 0 15px; }
+      .material-row { grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 13px 0; position: relative; }
+      .material-row .name-field { grid-column: 1 / -1; padding-right: 35px; }
+      .mobile-label { display: block; color: var(--muted); font-size: 10px; margin: 0 0 5px; }
+      .material-row input { height: 35px; }
+      .row-total { text-align: left; height: 35px; display: flex; align-items: center; }
+      .remove-button { position: absolute; right: 0; top: 13px; }
+      .materials-footer { padding: 14px 15px; }
+      .settings-panel { padding: 17px; }
+      .settings-panel h2 { margin-bottom: 17px; }
+      .global-settings { align-items: flex-start; padding: 14px; }
+      .global-settings label { flex-direction: column; align-items: flex-end; gap: 5px; }
+      .category-grid, .weapons-grid { grid-template-columns: 1fr; gap: 12px; }
+      .equipment-card { padding: 14px; }
+      .item-header { display: none; }
+      .item-row { grid-template-columns: 1fr 56px 1fr 1fr 24px; gap: 6px; padding: 8px 0; }
+      .item-row .mobile-label { display: block; color: var(--muted); font-size: 9px; margin: 0 0 4px; }
+      .item-row .field-wrap { min-width: 0; }
+      .item-row .item-row-total { text-align: left; min-height: 33px; display: flex; align-items: center; }
+      .item-row .remove-button { align-self: end; margin-bottom: 1px; }
+      .equipment-actions { align-items: flex-end; flex-wrap: wrap; }
+      .weapon-section { margin: 20px 0; }
+      .equipment-fee { gap: 5px; }
+      .fee-input { width: 72px; }
+      .small-button { padding: 0 7px; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      main { animation: arrive .35s ease-out both; }
+      @keyframes arrive { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    }
+
+    .simulator { max-width: 1050px; }
+    .simulator .heading { margin-bottom: 24px; }
+    #set-summary { grid-template-columns: minmax(230px, .8fr) minmax(0, 1.6fr); }
+    #set-summary .metric { min-height: 120px; }
+    #set-summary .metric-value { white-space: normal; }
+    .benefit-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .benefit-line { border-left: 2px solid #8da878; padding: 3px 8px; color: var(--ink); font-size: 12px; line-height: 1.45; }
+    .benefit-empty { color: var(--muted); font: 14px var(--body); }
+    .equipment-panel { background: var(--panel); border: 1px solid var(--line); }
+    .equipment-panel-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 19px 22px; border-bottom: 1px solid var(--line); }
+    .equipment-panel-heading h2 { font-size: 15px; }
+    .equipment-panel-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+    .equipment-list { padding: 0 22px; }
+    .gear-row { display: grid; grid-template-columns: minmax(165px, .65fr) minmax(0, 1fr); gap: 20px; align-items: center; padding: 17px 0; border-top: 1px solid #edf0e9; }
+    .gear-row:first-child { border-top: 0; }
+    .gear-title { min-width: 0; }
+    .gear-title h3 { margin: 0 0 8px; font-size: 14px; }
+    .gear-title select, .weapon-name-input { width: 100%; max-width: 210px; height: 34px; border: 1px solid #dfe4dc; border-radius: 2px; background: white; padding: 0 8px; color: var(--ink); outline: none; }
+    .gear-title select:focus, .weapon-name-input:focus { border-color: #7c9a69; box-shadow: 0 0 0 2px #e6efd9; }
+    .gear-slots { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; }
+    .imbue-slot {
+      aspect-ratio: 1;
+      width: 70px;
+      border: 1px solid #dfe4dc;
+      border-radius: 2px;
+      background: #fbfcf8;
+      color: var(--forest);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 5px;
+      text-align: center;
+    }
+    .imbue-slot:hover { border-color: #8da878; background: var(--soft-green); }
+    .slot-plus { font-size: 24px; font-weight: 300; line-height: 1; }
+    .slot-index { color: var(--muted); font-size: 9px; }
+    .slot-filled { background: var(--forest); color: white; border-color: var(--forest); }
+    .slot-filled:hover { background: #32614d; color: white; }
+    .slot-filled .slot-index { color: #c1cfc3; }
+    .slot-imbue-name { max-width: 100%; overflow-wrap: anywhere; font-size: 10px; font-weight: 700; line-height: 1.15; }
+    .weapon-section { border-top: 1px solid var(--line); }
+    .weapon-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 15px 22px 4px; }
+    .weapon-section-heading h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0; }
+    .add-weapon { min-height: 32px; }
+    .weapon-remove { width: 26px; height: 26px; margin-left: 6px; border: 0; background: transparent; color: #a64e38; font-size: 18px; }
+    .token-settings, .jewelry-card { border: 1px solid #3a3d45; border-radius: 12px; background: #282a31; padding: 14px 18px; }
+    .token-settings { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .token-settings strong, .jewelry-card strong { display: block; font-size: 12px; }
+    .token-settings p, .jewelry-card p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .token-settings label, .jewelry-fields label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; }
+    .token-settings input, .token-settings select, .jewelry-fields input, .jewelry-mode { width: 130px; height: 36px; border: 1px solid #41444d; border-radius: 8px; background: #34373f; color: var(--ink); padding: 0 10px; outline: none; }
+    .token-settings input:focus, .token-settings select:focus, .jewelry-fields input:focus, .jewelry-mode:focus { border-color: #5d8aff; }
+    .token-setting-fields { display: flex; flex-wrap: wrap; gap: 12px; }
+    .jewelry-card { display: grid; gap: 16px; }
+    .jewelry-fields { display: flex; flex-wrap: wrap; gap: 14px; }
+    .plasma-fields { display: grid; gap: 10px; }
+    .plasma-fields[hidden], .silver-fields[hidden] { display: none; }
+    .plasma-line { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(100px, 160px); gap: 10px; align-items: end; }
+    .plasma-profession { padding: 9px 0; font-size: 11px; font-weight: 650; }
+    .jewelry-total { padding-top: 12px; border-top: 1px solid #3a3d45; font-size: 12px; font-weight: 700; }
+    .token-comparison { padding: 12px; border: 1px solid #3a3d45; border-radius: 8px; background: #25272e; }
+    .token-comparison[hidden] { display: none; }
+    .token-comparison label { display: block; margin-bottom: 10px; font-size: 11px; font-weight: 700; }
+    .token-comparison select { width: 100%; height: 36px; border: 1px solid #41444d; border-radius: 8px; background: #34373f; color: var(--ink); padding: 0 9px; }
+    .token-comparison p { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    #token-comparison-details { white-space: pre-line; }
+
+    dialog {
+      width: min(590px, calc(100vw - 28px));
+      max-width: none;
+      max-height: min(88vh, 820px);
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      padding: 0;
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 18px 70px #1119;
+    }
+    dialog::backdrop { background: #18211d99; }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 20px 22px 16px; border-bottom: 1px solid var(--line); }
+    .modal-header h2 { font-family: var(--display); font-size: 25px; font-weight: 500; }
+    .modal-kicker { margin: 0 0 5px; color: #66836f; font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+    .icon-button { flex: 0 0 32px; width: 32px; height: 32px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 20px; line-height: 1; }
+    .modal-body { overflow-y: auto; max-height: calc(88vh - 145px); padding: 18px 22px 20px; }
+    .modal-field { margin-bottom: 18px; }
+    .modal-field > label, .modal-label { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0; }
+    .modal-select { width: 100%; height: 42px; border: 1px solid #dfe4dc; border-radius: 2px; background: #fff; padding: 0 10px; color: var(--ink); outline: none; }
+    .modal-select:focus, .price-input:focus { border-color: #7c9a69; box-shadow: 0 0 0 2px #e6efd9; }
+    .tier-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .tier-option { position: relative; }
+    .tier-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .tier-option label { min-height: 43px; display: flex; justify-content: center; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 2px; background: white; cursor: pointer; font-size: 12px; }
+    .tier-option label::before { content: ""; width: 11px; height: 11px; border: 1px solid #9aa398; border-radius: 50%; }
+    .tier-option input:checked + label { border-color: var(--forest); background: var(--soft-green); }
+    .tier-option input:checked + label::before { border: 4px solid var(--forest); }
+    .tier-option input:focus-visible + label { outline: 2px solid #7c9a69; outline-offset: 2px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 18px; }
+    .detail-cell { background: #f1f3eb; padding: 12px; min-width: 0; }
+    .detail-label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+    .detail-value { font-size: 13px; font-weight: 700; line-height: 1.4; }
+    .recipe-heading { display: grid; grid-template-columns: minmax(0, 1fr) 46px 130px; gap: 10px; padding-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+    .recipe-row { display: grid; grid-template-columns: minmax(0, 1fr) 46px 130px; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid #edf0e9; }
+    .ingredient-name { font-size: 12px; line-height: 1.3; }
+    .price-sharing-note { margin: -2px 0 11px; color: var(--muted); font-size: 10px; }
+    .ingredient-quantity { text-align: center; font-size: 12px; font-weight: 700; }
+    .price-input { width: 100%; height: 36px; border: 1px solid #dfe4dc; border-radius: 2px; padding: 0 8px; text-align: right; outline: none; }
+    .recipe-error { min-height: 18px; margin: 10px 0 0; color: #a64e38; font-size: 11px; }
+    .modal-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 22px; border-top: 1px solid var(--line); background: #fbfcf8; }
+    .apply-button { min-height: 40px; border: 0; border-radius: 2px; background: var(--forest); color: white; padding: 0 20px; font-size: 12px; font-weight: 700; }
+    .apply-button:hover { background: #32614d; }
+    .clear-button { min-height: 38px; border: 1px solid #e4cfc8; border-radius: 2px; background: transparent; color: #a64e38; padding: 0 12px; font-size: 11px; }
+    .clear-button[hidden] { display: none; }
+
+    @media (max-width: 620px) {
+      .simulator { padding: 27px 14px 36px; }
+      .simulator .heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+      #set-summary { grid-template-columns: 1fr; }
+      #set-summary .metric { min-height: 90px; padding: 15px; }
+      #set-summary .metric-value { font-size: 25px; }
+      .equipment-panel-heading { align-items: flex-start; flex-direction: column; padding: 15px; gap: 6px; }
+      .equipment-list { padding: 0 15px; }
+      .gear-row { grid-template-columns: minmax(0, 1fr); gap: 11px; padding: 15px 0; }
+      .gear-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .gear-title h3 { margin: 0; }
+      .gear-title select, .weapon-name-input { max-width: 170px; }
+      .gear-slots { grid-template-columns: repeat(3, 64px); gap: 8px; }
+      .imbue-slot { width: 64px; }
+      .weapon-section-heading { padding: 14px 15px 4px; }
+      .weapon-section-heading h3 { font-size: 11px; }
+      .modal-header { padding: 17px 16px 14px; }
+      .modal-body { padding: 15px 16px 18px; }
+      .modal-actions { padding: 12px 16px; }
+      .recipe-heading, .recipe-row { grid-template-columns: minmax(0, 1fr) 36px 108px; gap: 7px; }
+      .ingredient-name { font-size: 11px; }
+      .price-input { height: 34px; }
+    }
+
+    :root {
+      color-scheme: dark;
+      --ink: #f0f1f4;
+      --muted: #a7abb5;
+      --line: #3a3d45;
+      --paper: #25272e;
+      --panel: #2b2e35;
+      --forest: #356cf6;
+      --lime: #356cf6;
+      --coral: #ef796e;
+      --soft-green: #31343c;
+      --display: "Segoe UI", Tahoma, sans-serif;
+    }
+    body { background: var(--paper); color: var(--ink); }
+    .topbar, .simulator > .heading { display: none; }
+    .simulator { width: min(100%, 680px); max-width: 680px; padding: 32px 16px 48px; }
+    .category-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 16px; scrollbar-width: none; }
+    .category-tabs::-webkit-scrollbar { display: none; }
+    .category-tab { flex: 0 0 auto; min-height: 40px; padding: 0 16px; border: 0; border-radius: 22px; background: #32353d; color: #b7bbc4; font-weight: 600; }
+    .category-tab[aria-selected="true"] { background: #356cf6; color: white; }
+    .gear-panel { border: 1px solid #3a3d45; border-radius: 12px; background: #282a31; padding: 18px 22px; }
+    .weapon-picker { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
+    .weapon-picker[hidden] { display: none; }
+    .gear-select, .gear-input { height: 36px; border: 1px solid #41444d; border-radius: 8px; background: #34373f; color: var(--ink); padding: 0 10px; outline: none; }
+    .gear-title .gear-select { border-color: #41444d; background: #34373f; color: var(--ink); }
+    .gear-select:focus, .gear-input:focus { border-color: #5d8aff; }
+    .weapon-picker .gear-select { flex: 1; }
+    .gear-row { display: grid; grid-template-columns: minmax(110px, 1fr) 32px auto; align-items: center; gap: 14px; padding: 0; border: 0; }
+    .gear-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .gear-icon-box { width: 70px; height: 70px; flex: 0 0 70px; display: grid; place-items: center; color: #f0f3f8; border: 1px dashed #356cf6; border-radius: 15px; background: #252a35; }
+    .gear-icon-box img { width: 46px; height: 46px; object-fit: contain; display: block; }
+    .gear-copy { min-width: 0; display: grid; gap: 7px; }
+    .gear-kind { color: #a7abb5; font-size: 11px; }
+    .gear-copy .gear-select, .gear-copy .gear-input { width: 100%; max-width: 220px; }
+    .gear-arrow { color: #8e929c; font-size: 22px; text-align: center; }
+    .gear-slots { display: flex; gap: 9px; }
+    .imbue-slot { width: 62px; height: 62px; aspect-ratio: auto; border: 0; border-radius: 12px; background: #373a42; color: #e2e4e9; gap: 2px; }
+    .imbue-slot:hover { background: #424650; border-color: transparent; }
+    .slot-plus { font-size: 23px; font-weight: 400; }
+    .slot-index { color: #aeb2bb; font-size: 9px; }
+    .slot-filled { background: #356cf6; color: white; }
+    .slot-filled:hover { background: #477dff; color: white; }
+    .slot-filled .slot-index { color: #e1e9ff; }
+    .slot-imbue-name { font-size: 10px; }
+    #set-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 24px -16px 0; border: 0; border-top: 1px solid #393c44; border-bottom: 1px solid #393c44; background: transparent; }
+    #set-summary .metric { min-width: 0; min-height: 68px; padding: 12px; background: transparent; text-align: center; }
+    #set-summary .metric.primary { background: transparent; }
+    #set-summary .metric-label { margin-bottom: 4px; color: #c1c4cb; font-size: 12px; font-weight: 500; text-transform: none; }
+    #set-summary .metric-value { font-family: var(--body); font-size: 15px; font-weight: 700; }
+    #set-summary .metric-unit { font-size: 13px; }
+    .benefit-summary { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-top: 1px solid #393c44; }
+    .benefit-summary .metric-label { flex: 0 0 auto; margin: 2px 0 0; }
+    .benefit-list { gap: 6px; }
+    .benefit-line { padding: 3px 7px; border: 1px solid #41444d; border-radius: 6px; color: #dce0e7; }
+    .benefit-empty { color: var(--muted); font-size: 12px; }
+    .equipment-panel, .equipment-panel-heading, .equipment-list, .weapon-section, .weapons-grid { border: 0; padding: 0; margin: 0; background: transparent; }
+    #equipment-list, #weapons-list { display: none; }
+    .weapon-remove { width: 34px; height: 34px; margin: 0; border: 1px solid #41444d; border-radius: 8px; background: #34373f; color: #c0c3cb; }
+    dialog { border-color: #40434c; border-radius: 12px; background: #2b2e35; color: var(--ink); box-shadow: 0 22px 80px #0009; }
+    dialog::backdrop { background: #101116b8; }
+    .modal-header, .modal-actions { border-color: #40434c; background: #2b2e35; }
+    .modal-kicker, .detail-label { color: #a7abb5; }
+    .icon-button, .clear-button { border-color: #464953; background: #34373f; color: #c2c6cf; }
+    .modal-select, .price-input { border-color: #454852; background: #34373f; color: var(--ink); }
+    .tier-option label { border-color: #444751; background: #34373f; color: #c4c7cf; }
+    .tier-option label::before { border-color: #858a95; }
+    .tier-option input:checked + label { border-color: #356cf6; background: #356cf6; color: white; }
+    .tier-option input:checked + label::before { border-color: white; }
+    .detail-cell { border: 1px solid #3d4048; border-radius: 8px; background: #30333a; }
+    .recipe-row { border-color: #3d4048; }
+    .modal-actions { border-top: 1px solid #40434c; }
+    .apply-button { border-radius: 8px; background: #356cf6; }
+    @media (max-width: 560px) {
+      .simulator { padding: 22px 14px 36px; }
+      .category-tabs { gap: 6px; margin-right: -14px; }
+      .category-tab { min-height: 38px; padding: 0 8px; font-size: 11px; }
+      .gear-panel { padding: 15px 13px; }
+      .token-settings { align-items: flex-start; flex-direction: column; padding: 13px; }
+      .token-setting-fields { width: 100%; flex-direction: column; }
+      .token-setting-fields label, .token-setting-fields input, .token-setting-fields select { width: 100%; }
+      .jewelry-card { padding: 14px; }
+      .plasma-line { grid-template-columns: 1fr 1fr; }
+      .plasma-profession { grid-column: 1 / -1; padding-bottom: 0; }
+      .gear-row { grid-template-columns: minmax(80px, 1fr) 18px auto; gap: 8px; }
+      .gear-title { gap: 8px; }
+      .gear-icon-box { width: 58px; height: 58px; flex-basis: 58px; border-radius: 12px; }
+      .gear-icon-box img { width: 36px; height: 36px; object-fit: contain; display: block; }
+      .gear-copy .gear-select, .gear-copy .gear-input { max-width: 145px; height: 32px; font-size: 11px; }
+      .gear-kind { font-size: 10px; }
+      .gear-slots { gap: 6px; }
+      .imbue-slot { width: 48px; height: 58px; border-radius: 10px; }
+      .slot-plus { font-size: 20px; }
+      #set-summary { margin-right: -14px; margin-left: -14px; }
+      .benefit-summary { flex-direction: column; gap: 7px; }
+    }
+    @media (max-width: 390px) {
+      .gear-row { grid-template-columns: 1fr; }
+      .gear-arrow { display: none; }
+      .gear-slots { padding-left: 66px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">T</span><span>TIBIA / ECONOMIA</span></div>
+    <span class="top-note">Calculadora de imbuement</span>
+  </header>
+
+  <main class="simulator">
+    <nav class="category-tabs" id="category-tabs" aria-label="Categorias de equipamento" role="tablist"></nav>
+    <section class="token-settings" aria-label="Preço do Gold Token">
+      <div>
+        <strong>Comparação com Gold Token</strong>
+        <p>Compare Void, Lifeleech (Vampirism) e Strike nos níveis Basic, Intricate e Powerful.</p>
+      </div>
+      <div class="token-setting-fields">
+        <label for="gold-token-price">Gold Token (GP / unidade)
+          <input id="gold-token-price" type="number" min="0" step="any" inputmode="decimal" placeholder="Valor em GP">
+        </label>
+        <label for="plasma-vocation">Vocação para custo/h
+          <select id="plasma-vocation"></select>
+        </label>
+      </div>
+    </section>
+    <section class="gear-panel" aria-label="Equipamento selecionado">
+      <div class="weapon-picker" id="weapon-picker" hidden></div>
+      <div id="active-equipment"></div>
+    </section>
+    <section class="summary" id="set-summary" aria-label="Resumo geral do set">
+      <div class="metric">
+        <div class="metric-label">Custo Total (20h)</div>
+        <div class="metric-value" id="total-cost">0 GP</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Custo por Hora</div>
+        <div class="metric-value" id="hourly-total">0 <span class="metric-unit">GP / h</span></div>
+      </div>
+      <div class="benefit-summary">
+        <div class="metric-label">Bônus Total</div>
+        <div class="benefit-list" id="benefit-list"><span class="benefit-empty">Nenhum imbuement ativo</span></div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="imbuement-modal" aria-labelledby="modal-title">
+    <form id="slot-form" novalidate>
+      <div class="modal-header">
+        <div>
+          <p class="modal-kicker" id="modal-context">Configuração do slot</p>
+          <h2 id="modal-title">Novo imbuement</h2>
+        </div>
+        <button class="icon-button" id="close-modal" type="button" aria-label="Fechar janela">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="imbuement-select">Imbuement</label>
+          <select class="modal-select" id="imbuement-select" required></select>
+        </div>
+        <fieldset class="modal-field" style="border:0;padding:0;margin-left:0;margin-right:0">
+          <legend class="modal-label">Nível do imbuement</legend>
+          <div class="tier-options">
+            <div class="tier-option"><input id="tier-basic" type="radio" name="tier" value="0"><label for="tier-basic">Basic</label></div>
+            <div class="tier-option"><input id="tier-intricate" type="radio" name="tier" value="1"><label for="tier-intricate">Intricate</label></div>
+            <div class="tier-option"><input id="tier-powerful" type="radio" name="tier" value="2"><label for="tier-powerful">Powerful</label></div>
+          </div>
+        </fieldset>
+        <div class="detail-grid" aria-live="polite">
+          <div class="detail-cell"><span class="detail-label">Bônus deste nível</span><div class="detail-value" id="tier-bonus"></div></div>
+          <div class="detail-cell"><span class="detail-label">Taxa oficial da máquina</span><div class="detail-value" id="tier-fee"></div></div>
+        </div>
+        <div class="modal-field">
+          <span class="modal-label">Itens de criatura</span>
+          <p class="price-sharing-note">Preços salvos por produto e reutilizados nos outros slots. O NPC fornece os materiais da receita conforme o nível: 1º slot (2 tokens), 1º e 2º slots (4 tokens) ou os 3 slots (6 tokens).</p>
+          <div class="recipe-heading" aria-hidden="true"><span>Produto</span><span>Qtd.</span><span>Preço unitário (GP)</span></div>
+          <div id="recipe-list"></div>
+          <div class="token-comparison" id="token-comparison" hidden>
+            <label for="payment-method">Forma de pagamento do imbuement</label>
+            <select id="payment-method">
+              <option value="items">Itens da receita</option>
+              <option value="gold-token">2 Gold Tokens</option>
+            </select>
+            <p id="token-comparison-details"></p>
+          </div>
+          <p class="recipe-error" id="recipe-error" role="alert"></p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="clear-button" id="clear-slot" type="button" hidden>Remover imbuement</button>
+        <button class="apply-button" type="submit">Aplicar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    (() => {
+      const storageKey = "tibia-imbuement-simulator-v3";
+      const tierOptions = [
+        { name: "Basic", fee: 7500 },
+        { name: "Intricate", fee: 60000 },
+        { name: "Powerful", fee: 250000 }
+      ];
+      const fixedEquipment = [
+        { id: "amulet", label: "Amuleto" },
+        { id: "ring", label: "Anel" },
+        { id: "helmet", label: "Helmet" },
+        { id: "armor", label: "Armor" },
+        { id: "shield", label: "Shield / Spellbook" },
+        { id: "boots", label: "Boots" },
+        { id: "backpack", label: "Backpack" }
+      ];
+      const categoryTabs = [
+        { id: "weapon", label: "Arma / Cajado", icon: "weapon" },
+        { id: "amulet", label: "Amuleto", icon: "amulet" },
+        { id: "ring", label: "Anel", icon: "ring" },
+        { id: "helmet", label: "Capacete", icon: "helmet" },
+        { id: "armor", label: "Armadura", icon: "armor" },
+        { id: "boots", label: "Botas", icon: "boots" },
+        { id: "shield", label: "Escudo / Spellbook", icon: "shield" },
+        { id: "backpack", label: "Mochila", icon: "backpack" }
+      ];
+      const weaponTypes = [
+        { id: "sword", label: "Sword" },
+        { id: "axe", label: "Axe" },
+        { id: "club", label: "Club" },
+        { id: "distance", label: "Distance" },
+        { id: "magic", label: "Wand / Rod" }
+      ];
+      const goldTokenImbuements = new Set(["void", "vampirism", "strike"]);
+      const goldTokensPerTier = [2, 4, 6];
+      const plasmaDurationHours = 0.5;
+      const vocations = [
+        { id: "mage", label: "Mage" },
+        { id: "paladin", label: "Paladin" },
+        { id: "knight", label: "Knight" },
+        { id: "monk", label: "Monk" }
+      ];
+      const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
+      const imbuements = [
+        {
+          id: "void", name: "Void", categories: ["helmet", "weapon"],
+          bonuses: [
+            [{ label: "Mana Leech", value: 3, unit: "% chance" }, { label: "Mana Leech", value: 5, unit: "% conversão" }],
+            [{ label: "Mana Leech", value: 5, unit: "% chance" }, { label: "Mana Leech", value: 8, unit: "% conversão" }],
+            [{ label: "Mana Leech", value: 8, unit: "% chance" }, { label: "Mana Leech", value: 11, unit: "% conversão" }]
+          ],
+          recipes: [
+            [{ id: "rope-belts", name: "Rope Belts", quantity: 25 }],
+            [{ id: "rope-belts", name: "Rope Belts", quantity: 25 }, { id: "silencer-claws", name: "Silencer Claws", quantity: 25 }],
+            [{ id: "rope-belts", name: "Rope Belts", quantity: 25 }, { id: "silencer-claws", name: "Silencer Claws", quantity: 25 }, { id: "grimeleech-wings", name: "Some Grimeleech Wings", quantity: 5 }]
+          ]
+        },
+        {
+          id: "vampirism", name: "Vampirism", categories: ["armor", "weapon"],
+          bonuses: [
+            [{ label: "Life Leech", value: 5, unit: "% chance" }, { label: "Life Leech", value: 10, unit: "% conversão" }],
+            [{ label: "Life Leech", value: 10, unit: "% chance" }, { label: "Life Leech", value: 18, unit: "% conversão" }],
+            [{ label: "Life Leech", value: 25, unit: "% chance" }, { label: "Life Leech", value: 25, unit: "% conversão" }]
+          ],
+          recipes: [
+            [{ id: "vampire-teeth", name: "Vampire Teeth", quantity: 25 }],
+            [{ id: "vampire-teeth", name: "Vampire Teeth", quantity: 25 }, { id: "bloody-pincers", name: "Bloody Pincers", quantity: 15 }],
+            [{ id: "vampire-teeth", name: "Vampire Teeth", quantity: 25 }, { id: "bloody-pincers", name: "Bloody Pincers", quantity: 15 }, { id: "dead-brain", name: "Piece of Dead Brain", quantity: 5 }]
+          ]
+        },
+        {
+          id: "strike", name: "Strike", categories: ["weapon"],
+          bonuses: [15, 25, 50].map((damage) => [
+            { label: "Critical Hit", value: 10, unit: "% chance" },
+            { label: "Critical Hit", value: damage, unit: "% dano crítico", sign: true }
+          ]),
+          recipes: [
+            [{ id: "protective-charms", name: "Protective Charms", quantity: 20 }],
+            [{ id: "protective-charms", name: "Protective Charms", quantity: 20 }, { id: "sabreteeth", name: "Sabreteeth", quantity: 25 }],
+            [{ id: "protective-charms", name: "Protective Charms", quantity: 20 }, { id: "sabreteeth", name: "Sabreteeth", quantity: 25 }, { id: "vexclaw-talons", name: "Vexclaw Talons", quantity: 5 }]
+          ]
+        },
+        {
+          id: "sword-skill", name: "Sword Skill", categories: ["helmet", "weapon"], weaponType: "sword",
+          bonuses: [1, 2, 4].map((value) => [{ label: "Sword Skill", value, unit: "", sign: true }]),
+          recipes: [
+            [{ id: "lions-manes", name: "Lion's Manes", quantity: 25 }],
+            [{ id: "lions-manes", name: "Lion's Manes", quantity: 25 }, { id: "moohtah-shells", name: "Mooh'tah Shells", quantity: 25 }],
+            [{ id: "lions-manes", name: "Lion's Manes", quantity: 25 }, { id: "moohtah-shells", name: "Mooh'tah Shells", quantity: 25 }, { id: "war-crystals", name: "War Crystals", quantity: 5 }]
+          ]
+        },
+        {
+          id: "axe-skill", name: "Axe Skill", categories: ["helmet", "weapon"], weaponType: "axe",
+          bonuses: [1, 2, 4].map((value) => [{ label: "Axe Skill", value, unit: "", sign: true }]),
+          recipes: [
+            [{ id: "orc-teeth", name: "Orc Teeth", quantity: 20 }],
+            [{ id: "orc-teeth", name: "Orc Teeth", quantity: 20 }, { id: "battle-stones", name: "Battle Stones", quantity: 25 }],
+            [{ id: "orc-teeth", name: "Orc Teeth", quantity: 20 }, { id: "battle-stones", name: "Battle Stones", quantity: 25 }, { id: "moohtant-horns", name: "Moohtant Horns", quantity: 20 }]
+          ]
+        },
+        {
+          id: "club-skill", name: "Club Skill", categories: ["helmet", "weapon"], weaponType: "club",
+          bonuses: [1, 2, 4].map((value) => [{ label: "Club Skill", value, unit: "", sign: true }]),
+          recipes: [
+            [{ id: "cyclops-toes", name: "Cyclops Toes", quantity: 20 }],
+            [{ id: "cyclops-toes", name: "Cyclops Toes", quantity: 20 }, { id: "ogre-nose-rings", name: "Ogre Nose Rings", quantity: 15 }],
+            [{ id: "cyclops-toes", name: "Cyclops Toes", quantity: 20 }, { id: "ogre-nose-rings", name: "Ogre Nose Rings", quantity: 15 }, { id: "warmaster-wristguards", name: "Warmaster's Wristguards", quantity: 10 }]
+          ]
+        },
+        {
+          id: "distance-skill", name: "Distance Skill", categories: ["helmet", "weapon"], weaponType: "distance",
+          bonuses: [1, 2, 4].map((value) => [{ label: "Distance Skill", value, unit: "", sign: true }]),
+          recipes: [
+            [{ id: "scouting-glasses", name: "Elven Scouting Glasses", quantity: 25 }],
+            [{ id: "scouting-glasses", name: "Elven Scouting Glasses", quantity: 25 }, { id: "elven-hoofs", name: "Elven Hoofs", quantity: 20 }],
+            [{ id: "scouting-glasses", name: "Elven Scouting Glasses", quantity: 25 }, { id: "elven-hoofs", name: "Elven Hoofs", quantity: 20 }, { id: "metal-spikes", name: "Metal Spikes", quantity: 10 }]
+          ]
+        },
+        {
+          id: "magic-skill", name: "Magic Level", categories: ["helmet", "weapon"], weaponType: "magic",
+          bonuses: [1, 2, 4].map((value) => [{ label: "Magic Level", value, unit: "", sign: true }]),
+          recipes: [
+            [{ id: "elvish-talismans", name: "Elvish Talismans", quantity: 25 }],
+            [{ id: "elvish-talismans", name: "Elvish Talismans", quantity: 25 }, { id: "shamanic-staffs", name: "Broken Shamanic Staffs", quantity: 15 }],
+            [{ id: "elvish-talismans", name: "Elvish Talismans", quantity: 25 }, { id: "shamanic-staffs", name: "Broken Shamanic Staffs", quantity: 15 }, { id: "medusa-hair", name: "Strands of Medusa Hair", quantity: 15 }]
+          ]
+        },
+        {
+          id: "swiftness", name: "Swiftness", categories: ["boots"],
+          bonuses: [10, 15, 30].map((value) => [{ label: "Speed", value, unit: "velocidade", sign: true }]),
+          recipes: [
+            [{ id: "damselfly-wings", name: "Damselfly Wings", quantity: 15 }],
+            [{ id: "damselfly-wings", name: "Damselfly Wings", quantity: 15 }, { id: "compasses", name: "Compasses", quantity: 25 }],
+            [{ id: "damselfly-wings", name: "Damselfly Wings", quantity: 15 }, { id: "compasses", name: "Compasses", quantity: 25 }, { id: "waspoid-wings", name: "Waspoid Wings", quantity: 20 }]
+          ]
+        },
+        {
+          id: "featherweight", name: "Featherweight", categories: ["backpack"],
+          bonuses: [3, 5, 8].map((value) => [{ label: "Capacity", value, unit: "% Cap", sign: true }]),
+          recipes: [
+            [{ id: "fairy-wings", name: "Fairy Wings", quantity: 20 }],
+            [{ id: "fairy-wings", name: "Fairy Wings", quantity: 20 }, { id: "myrrh-bowls", name: "Little Bowls of Myrrh", quantity: 10 }],
+            [{ id: "fairy-wings", name: "Fairy Wings", quantity: 20 }, { id: "myrrh-bowls", name: "Little Bowls of Myrrh", quantity: 10 }, { id: "goosebump-leather", name: "Goosebump Leather", quantity: 5 }]
+          ]
+        },
+        {
+          id: "death-protection", name: "Death Protection", categories: ["armor", "shield"],
+          bonuses: [3, 8, 15].map((value) => [{ label: "Death Protection", value, unit: "% proteção", sign: true }]),
+          recipes: [
+            [{ id: "embalming-fluid", name: "Flasks of Embalming Fluid", quantity: 25 }],
+            [{ id: "embalming-fluid", name: "Flasks of Embalming Fluid", quantity: 25 }, { id: "gloom-wolf-furs", name: "Gloom Wolf Furs", quantity: 20 }],
+            [{ id: "embalming-fluid", name: "Flasks of Embalming Fluid", quantity: 25 }, { id: "gloom-wolf-furs", name: "Gloom Wolf Furs", quantity: 20 }, { id: "mystical-hourglasses", name: "Mystical Hourglasses", quantity: 5 }]
+          ]
+        },
+        {
+          id: "earth-protection", name: "Earth Protection", categories: ["armor", "shield"],
+          bonuses: [3, 8, 15].map((value) => [{ label: "Earth Protection", value, unit: "% proteção", sign: true }]),
+          recipes: [
+            [{ id: "swampling-wood", name: "Pieces of Swampling Wood", quantity: 25 }],
+            [{ id: "swampling-wood", name: "Pieces of Swampling Wood", quantity: 25 }, { id: "snake-skins", name: "Snake Skins", quantity: 20 }],
+            [{ id: "swampling-wood", name: "Pieces of Swampling Wood", quantity: 25 }, { id: "snake-skins", name: "Snake Skins", quantity: 20 }, { id: "brimstone-fangs", name: "Brimstone Fangs", quantity: 10 }]
+          ]
+        },
+        {
+          id: "fire-protection", name: "Fire Protection", categories: ["armor", "shield"],
+          bonuses: [3, 8, 15].map((value) => [{ label: "Fire Protection", value, unit: "% proteção", sign: true }]),
+          recipes: [
+            [{ id: "green-dragon-leathers", name: "Green Dragon Leathers", quantity: 20 }],
+            [{ id: "green-dragon-leathers", name: "Green Dragon Leathers", quantity: 20 }, { id: "blazing-bones", name: "Blazing Bones", quantity: 10 }],
+            [{ id: "green-dragon-leathers", name: "Green Dragon Leathers", quantity: 20 }, { id: "blazing-bones", name: "Blazing Bones", quantity: 10 }, { id: "draken-sulphur", name: "Draken Sulphur", quantity: 5 }]
+          ]
+        },
+        {
+          id: "ice-protection", name: "Ice Protection", categories: ["armor", "shield"],
+          bonuses: [3, 8, 15].map((value) => [{ label: "Ice Protection", value, unit: "% proteção", sign: true }]),
+          recipes: [
+            [{ id: "winter-wolf-furs", name: "Winter Wolf Furs", quantity: 25 }],
+            [{ id: "winter-wolf-furs", name: "Winter Wolf Furs", quantity: 25 }, { id: "thick-furs", name: "Thick Furs", quantity: 15 }],
+            [{ id: "winter-wolf-furs", name: "Winter Wolf Furs", quantity: 25 }, { id: "thick-furs", name: "Thick Furs", quantity: 15 }, { id: "deepling-warts", name: "Deepling Warts", quantity: 10 }]
+          ]
+        },
+        {
+          id: "energy-protection", name: "Energy Protection", categories: ["armor", "shield"],
+          bonuses: [3, 8, 15].map((value) => [{ label: "Energy Protection", value, unit: "% proteção", sign: true }]),
+          recipes: [
+            [{ id: "wyvern-talismans", name: "Wyvern Talismans", quantity: 20 }],
+            [{ id: "wyvern-talismans", name: "Wyvern Talismans", quantity: 20 }, { id: "crawler-platings", name: "Crawler Head Platings", quantity: 15 }],
+            [{ id: "wyvern-talismans", name: "Wyvern Talismans", quantity: 20 }, { id: "crawler-platings", name: "Crawler Head Platings", quantity: 15 }, { id: "wyrm-scales", name: "Wyrm Scales", quantity: 10 }]
+          ]
+        },
+        {
+          id: "holy-protection", name: "Holy Protection", categories: ["armor", "shield"],
+          bonuses: [3, 8, 15].map((value) => [{ label: "Holy Protection", value, unit: "% proteção", sign: true }]),
+          recipes: [
+            [{ id: "cultish-robes", name: "Cultish Robes", quantity: 25 }],
+            [{ id: "cultish-robes", name: "Cultish Robes", quantity: 25 }, { id: "cultish-masks", name: "Cultish Masks", quantity: 25 }],
+            [{ id: "cultish-robes", name: "Cultish Robes", quantity: 25 }, { id: "cultish-masks", name: "Cultish Masks", quantity: 25 }, { id: "hellspawn-tails", name: "Hellspawn Tails", quantity: 20 }]
+          ]
+        }
+      ];
+      const imbuementById = new Map(imbuements.map((imbuement) => [imbuement.id, imbuement]));
+      const modal = document.querySelector("#imbuement-modal");
+      const slotForm = document.querySelector("#slot-form");
+      const imbuementSelect = document.querySelector("#imbuement-select");
+      let state = loadState();
+      let activeCategory = "weapon";
+      let selectedWeaponId = state.weapons[0].id;
+      let modalContext = null;
+      let modalDraft = null;
+
+      function emptyProfile(slotCount = 3) {
+        return { slots: Array.from({ length: slotCount }, () => null), silverTokenQuantity: 1 };
+      }
+
+      function normalizeProfile(profile, slotCount = 3) {
+        const slots = Array.isArray(profile?.slots) ? profile.slots : [];
+        const plasmaPrices = Object.fromEntries(vocations.map(({ id }) => {
+          const plasma = id === "mage"
+            ? profile?.plasmaPrices?.mage || profile?.plasmaPrices?.sorcerer || profile?.plasmaPrices?.druid || {}
+            : profile?.plasmaPrices?.[id] || {};
+          const price = plasma.price;
+          return [id, {
+            price: price !== null && price !== undefined && Number.isFinite(Number(price)) && Number(price) >= 0 ? Number(price) : null
+          }];
+        }));
+        return {
+          slots: Array.from({ length: slotCount }, (_, index) => {
+            const slot = slots[index];
+            if (!slot || !imbuementById.has(slot.imbuementId)) return null;
+            return {
+              imbuementId: slot.imbuementId,
+              tier: Math.min(2, Math.max(0, Number(slot.tier) || 0)),
+              prices: slot.prices && typeof slot.prices === "object" ? slot.prices : {},
+              paymentMethod: slot.paymentMethod === "gold-token" && Number(slot.tier) === 2 && goldTokenImbuements.has(slot.imbuementId)
+                ? "gold-token"
+                : "items"
+            };
+          }),
+          silverTokenQuantity: Math.min(5, Math.max(1, Math.trunc(Number(profile?.silverTokenQuantity) || 1))),
+          jewelryMode: profile?.jewelryMode === "plasma" ? "plasma" : "silver-token",
+          plasmaPrices
+        };
+      }
+
+      function getSlotCount(category) {
+        if (category === "helmet" || category === "armor") return 2;
+        if (category === "amulet" || category === "ring") return 1;
+        return category === "weapon" ? 3 : 1;
+      }
+
+      function createDefaultState() {
+        return {
+          equipment: Object.fromEntries(fixedEquipment.map(({ id }) => [id, emptyProfile(getSlotCount(id))])),
+          weapons: [{ id: 1, name: "Weapon 1", type: "sword", ...emptyProfile(3) }],
+          itemPrices: {},
+          goldTokenPrice: null,
+          plasmaVocation: "knight",
+          nextWeaponId: 2
+        };
+      }
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey));
+          if (!saved) return createDefaultState();
+          const defaults = createDefaultState();
+          const equipment = Object.fromEntries(fixedEquipment.map(({ id }) => [
+            id,
+            normalizeProfile(saved.equipment?.[id], getSlotCount(id))
+          ]));
+          const usedIds = new Set();
+          const weapons = (Array.isArray(saved.weapons) ? saved.weapons : []).map((weapon, index) => {
+            let id = Number(weapon.id);
+            if (!Number.isInteger(id) || id < 1 || usedIds.has(id)) id = index + 1;
+            while (usedIds.has(id)) id += 1;
+            usedIds.add(id);
+            return { id, name: String(weapon.name || `Weapon ${id}`), type: weaponTypes.some((type) => type.id === weapon.type) ? weapon.type : "sword", ...normalizeProfile(weapon, 3) };
+          });
+          if (weapons.length === 0) weapons.push(defaults.weapons[0]);
+          const itemPrices = Object.fromEntries(Object.entries(saved.itemPrices || {})
+            .filter(([, price]) => Number.isFinite(Number(price)) && Number(price) >= 0)
+            .map(([itemId, price]) => [itemId, Number(price)]));
+          const storedSilverTokenPrice = saved.silverTokenUnitPrice
+            ?? saved.equipment?.amulet?.silverTokenUnitPrice
+            ?? saved.equipment?.ring?.silverTokenUnitPrice;
+          const silverTokenUnitPrice = storedSilverTokenPrice !== null
+            && storedSilverTokenPrice !== undefined
+            && Number.isFinite(Number(storedSilverTokenPrice))
+            && Number(storedSilverTokenPrice) >= 0
+            ? Number(storedSilverTokenPrice)
+            : null;
+          [...Object.values(equipment), ...weapons].forEach((profile) => {
+            profile.slots.forEach((slot) => {
+              if (!slot) return;
+              Object.entries(slot.prices).forEach(([itemId, price]) => {
+                if (!Object.prototype.hasOwnProperty.call(itemPrices, itemId) && Number.isFinite(Number(price)) && Number(price) >= 0) {
+                  itemPrices[itemId] = Number(price);
+                }
+              });
+            });
+          });
+          return {
+            equipment,
+            weapons,
+            itemPrices,
+            silverTokenUnitPrice,
+            goldTokenPrice: saved.goldTokenPrice !== null
+              && saved.goldTokenPrice !== undefined
+              && Number.isFinite(Number(saved.goldTokenPrice))
+              && Number(saved.goldTokenPrice) >= 0
+              ? Number(saved.goldTokenPrice)
+              : null,
+            plasmaVocation: ["sorcerer", "druid"].includes(saved.plasmaVocation)
+              ? "mage"
+              : vocations.some(({ id }) => id === saved.plasmaVocation) ? saved.plasmaVocation : "knight",
+            nextWeaponId: Math.max(Number(saved.nextWeaponId) || 1, ...weapons.map((weapon) => weapon.id + 1))
+          };
+        } catch { /* Start with an empty set if saved data is unreadable. */ }
+        return createDefaultState();
+      }
+
+      function saveState() {
+        try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* The simulator remains usable without storage. */ }
+      }
+
+      function formatNumber(value) {
+        return numberFormat.format(value);
+      }
+
+      function formatGp(value) {
+        return `${formatNumber(value)} GP`;
+      }
+
+      function profileFor(key) {
+        if (key.startsWith("weapon:")) {
+          const id = Number(key.slice("weapon:".length));
+          return state.weapons.find((weapon) => weapon.id === id);
+        }
+        return state.equipment[key];
+      }
+
+      function equipmentKind(key) {
+        return key.startsWith("weapon:") ? "weapon" : key;
+      }
+
+      function eligibleImbuements(key, slotIndex) {
+        const profile = profileFor(key);
+        const kind = equipmentKind(key);
+        const used = profile.slots.flatMap((slot, index) => index !== slotIndex && slot ? [slot.imbuementId] : []);
+        return imbuements.filter((imbuement) => {
+          if (!imbuement.categories.includes(kind) || used.includes(imbuement.id)) return false;
+          if (imbuement.weaponType) {
+            if (kind === "weapon" && profile.type !== imbuement.weaponType) return false;
+          }
+          return true;
+        });
+      }
+
+      function slotCost(slot) {
+        if (!slot) return 0;
+        const imbuement = imbuementById.get(slot.imbuementId);
+        if (!imbuement) return 0;
+        if (slot.paymentMethod === "gold-token" && canUseGoldTokens(imbuement, slot.tier) && state.goldTokenPrice !== null) {
+          return tierOptions[slot.tier].fee + goldTokensPerTier[slot.tier] * state.goldTokenPrice;
+        }
+        const recipe = imbuement.recipes[slot.tier];
+        const materialsCost = recipe.reduce((sum, item) => sum + item.quantity * Math.max(0, Number(slot.prices[item.id]) || 0), 0);
+        return tierOptions[slot.tier].fee + materialsCost;
+      }
+
+      function canUseGoldTokens(imbuement, tier) {
+        return tierOptions[tier] !== undefined && goldTokenImbuements.has(imbuement.id);
+      }
+
+      function jewelryCosts() {
+        let oneTime = 0;
+        let hourly = 0;
+        ["amulet", "ring"].forEach((key) => {
+          const profile = state.equipment[key];
+          if (profile.jewelryMode === "plasma") {
+            const plasma = profile.plasmaPrices[state.plasmaVocation];
+            if (plasma?.price !== null && plasma?.price !== undefined) {
+              hourly += plasma.price / plasmaDurationHours;
+            }
+          } else if (state.silverTokenUnitPrice !== null) {
+            oneTime += state.silverTokenUnitPrice * profile.silverTokenQuantity;
+          }
+        });
+        return { oneTime, hourly };
+      }
+
+      function updateJewelryPanel(key, profile) {
+        const panel = document.querySelector("#active-equipment .jewelry-card");
+        if (!panel) return;
+        panel.querySelector(".silver-fields").hidden = profile.jewelryMode !== "silver-token";
+        panel.querySelector(".plasma-fields").hidden = profile.jewelryMode !== "plasma";
+        const total = panel.querySelector("[data-jewelry-total]");
+        if (profile.jewelryMode === "plasma") {
+          const plasma = profile.plasmaPrices[state.plasmaVocation];
+          total.textContent = plasma?.price !== null && plasma?.price !== undefined
+            ? `${key === "amulet" ? "Plasma Amulet" : "Plasma Ring"} (${vocations.find(({ id }) => id === state.plasmaVocation).label}): ${formatGp(plasma.price / plasmaDurationHours)} / h · duração: 30 min`
+            : "Informe o preço para calcular o custo por hora (duração fixa: 30 minutos).";
+        } else {
+          total.textContent = state.silverTokenUnitPrice === null
+            ? "Informe o valor unitário do Silver Token."
+            : `Custo do slot: ${formatGp(state.silverTokenUnitPrice * profile.silverTokenQuantity)}`;
+        }
+      }
+
+      function renderJewelryPanel(key, profile) {
+        const panel = document.createElement("article");
+        panel.className = "jewelry-card";
+        const heading = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = key === "amulet" ? "Amuleto · Slot único" : "Anel · Slot único";
+        const description = document.createElement("p");
+        description.textContent = key === "amulet"
+          ? "Escolha o custo em Silver Tokens ou configure o Plasma Amulet por vocação (duração fixa: 30 minutos)."
+          : "Escolha o custo em Silver Tokens ou configure o Plasma Ring por vocação (duração fixa: 30 minutos).";
+        heading.append(title, description);
+        const mode = document.createElement("select");
+        mode.className = "jewelry-mode";
+        mode.setAttribute("aria-label", "Tipo de item");
+        mode.dataset.jewelryProperty = "jewelryMode";
+        [
+          { value: "silver-token", label: "Silver Tokens" },
+          { value: "plasma", label: key === "amulet" ? "Plasma Amulet" : "Plasma Ring" }
+        ].forEach(({ value, label }) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          mode.append(option);
+        });
+        mode.value = profile.jewelryMode;
+        const fields = document.createElement("div");
+        fields.className = "jewelry-fields silver-fields";
+        fields.hidden = profile.jewelryMode !== "silver-token";
+        const priceLabel = document.createElement("label");
+        priceLabel.textContent = "Silver Token (GP / unidade)";
+        const price = document.createElement("input");
+        price.type = "number";
+        price.min = "0";
+        price.step = "any";
+        price.inputMode = "decimal";
+        price.placeholder = "Valor em GP";
+        price.value = state.silverTokenUnitPrice ?? "";
+        price.dataset.silverTokenProperty = "silverTokenUnitPrice";
+        priceLabel.append(price);
+        const quantityLabel = document.createElement("label");
+        quantityLabel.textContent = "Unidades usadas (1 a 5)";
+        const quantity = document.createElement("input");
+        quantity.type = "number";
+        quantity.min = "1";
+        quantity.max = "5";
+        quantity.step = "1";
+        quantity.value = String(profile.silverTokenQuantity);
+        quantity.dataset.silverTokenProperty = "silverTokenQuantity";
+        quantityLabel.append(quantity);
+        fields.append(priceLabel, quantityLabel);
+        const plasmaFields = document.createElement("div");
+        plasmaFields.className = "plasma-fields";
+        plasmaFields.hidden = profile.jewelryMode !== "plasma";
+        vocations.forEach(({ id, label }) => {
+          const plasma = profile.plasmaPrices[id];
+          const line = document.createElement("div");
+          line.className = "plasma-line";
+          const profession = document.createElement("span");
+          profession.className = "plasma-profession";
+          profession.textContent = label;
+          const priceLabel = document.createElement("label");
+          priceLabel.textContent = "Preço (GP)";
+          const plasmaPrice = document.createElement("input");
+          plasmaPrice.type = "number";
+          plasmaPrice.min = "0";
+          plasmaPrice.step = "any";
+          plasmaPrice.inputMode = "decimal";
+          plasmaPrice.placeholder = "Valor unitário";
+          plasmaPrice.value = plasma.price ?? "";
+          plasmaPrice.dataset.plasmaProperty = "price";
+          plasmaPrice.dataset.vocation = id;
+          priceLabel.append(plasmaPrice);
+          line.append(profession, priceLabel);
+          plasmaFields.append(line);
+        });
+        const total = document.createElement("div");
+        total.className = "jewelry-total";
+        total.dataset.jewelryTotal = "true";
+        panel.append(heading, mode, fields, plasmaFields, total);
+        updateJewelryPanel(key, profile);
+        return panel;
+      }
+
+      function allActiveSlots() {
+        return [
+          ...fixedEquipment.flatMap(({ id }) => state.equipment[id].slots),
+          ...state.weapons.flatMap((weapon) => weapon.slots)
+        ].filter(Boolean);
+      }
+
+      function summarizeBonuses(slots) {
+        const totals = new Map();
+        slots.forEach((slot) => {
+          const imbuement = imbuementById.get(slot.imbuementId);
+          imbuement.bonuses[slot.tier].forEach((bonus) => {
+            if (!totals.has(bonus.label)) totals.set(bonus.label, new Map());
+            const units = totals.get(bonus.label);
+            const value = units.get(bonus.unit) || { value: 0, sign: Boolean(bonus.sign) };
+            value.value += bonus.value;
+            value.sign = value.sign || Boolean(bonus.sign);
+            units.set(bonus.unit, value);
+          });
+        });
+        return [...totals].map(([label, units]) => ({
+          label,
+          value: [...units].map(([unit, data]) => `${data.sign && data.value > 0 ? "+" : ""}${formatNumber(data.value)}${unit.startsWith("%") ? "" : " "}${unit}`.trim()).join(" / ")
+        }));
+      }
+
+      function updateSummary() {
+        const slots = allActiveSlots();
+        const jewelry = jewelryCosts();
+        const hourlyCost = slots.reduce((sum, slot) => sum + slotCost(slot), 0) / 20
+          + jewelry.oneTime / 20
+          + jewelry.hourly;
+        const totalCost = hourlyCost * 20;
+        document.querySelector("#total-cost").textContent = formatGp(totalCost);
+        document.querySelector("#hourly-total").innerHTML = `${formatNumber(hourlyCost)} <span class="metric-unit">GP / h</span>`;
+        const benefitList = document.querySelector("#benefit-list");
+        const bonuses = summarizeBonuses(slots);
+        benefitList.replaceChildren();
+        if (bonuses.length === 0) {
+          const empty = document.createElement("span");
+          empty.className = "benefit-empty";
+          empty.textContent = "Nenhum imbuement ativo";
+          benefitList.append(empty);
+        } else {
+          bonuses.forEach((bonus) => {
+            const line = document.createElement("span");
+            line.className = "benefit-line";
+            line.textContent = `${bonus.label}: ${bonus.value}`;
+            benefitList.append(line);
+          });
+        }
+      }
+
+      function createSelect(label, options, value, key, property) {
+        const select = document.createElement("select");
+        select.className = "gear-select";
+        select.setAttribute("aria-label", label);
+        select.dataset.profileKey = key;
+        select.dataset.profileProperty = property;
+        options.forEach((option) => {
+          const entry = document.createElement("option");
+          entry.value = option.id;
+          entry.textContent = option.label;
+          select.append(entry);
+        });
+        select.value = value;
+        return select;
+      }
+
+      function createGearIcon(iconName, weaponType = "sword") {
+        const iconKey = iconName === "weapon" ? `weapon-${weaponType}` : iconName;
+        const iconFiles = {
+          "weapon-sword": "sword",
+          "weapon-axe": "axe",
+          "weapon-club": "club",
+          "weapon-distance": "distance",
+          "weapon-magic": "wand",
+          helmet: "helmet",
+          armor: "armor",
+          shield: "armor",
+          boots: "boots",
+          backpack: "backpack"
+        };
+        const image = document.createElement("img");
+        image.src = `assets/icons/${iconFiles[iconKey] || "armor"}.png`;
+        image.alt = "";
+        image.draggable = false;
+        return image;
+      }
+
+      function activeProfileKey() {
+        return activeCategory === "weapon" ? `weapon:${selectedWeaponId}` : activeCategory;
+      }
+
+      function gearItemFor(key, profile = profileFor(key)) {
+        if (key.startsWith("weapon:")) return { id: "weapon", label: profile.name || "Weapon", slots: 3 };
+        return { id: key, label: fixedEquipment.find((item) => item.id === key)?.label || key, slots: getSlotCount(key) };
+      }
+
+      function createGearRow(key, profile) {
+        const row = document.createElement("article");
+        row.className = "gear-row";
+        row.dataset.gearKey = key;
+        const isWeapon = key.startsWith("weapon:");
+        const tab = categoryTabs.find((item) => item.id === (isWeapon ? "weapon" : key));
+        const gearItem = gearItemFor(key, profile);
+        const title = document.createElement("div");
+        title.className = "gear-title";
+        const icon = document.createElement("div");
+        icon.className = "gear-icon-box";
+        icon.append(createGearIcon(tab.icon, profile.type));
+
+        const copy = document.createElement("div");
+        copy.className = "gear-copy";
+        const kind = document.createElement("span");
+        kind.className = "gear-kind";
+        kind.textContent = isWeapon ? tab.label : gearItem.label;
+        copy.append(kind);
+        if (isWeapon) {
+          const name = document.createElement("input");
+          name.className = "gear-input";
+          name.type = "text";
+          name.maxLength = 50;
+          name.value = profile.name;
+          name.dataset.weaponName = String(profile.id);
+          name.setAttribute("aria-label", "Nome da arma");
+          copy.append(name);
+          copy.append(createSelect("Tipo de arma", weaponTypes, profile.type, key, "type"));
+        }
+        title.append(icon, copy);
+
+        const arrow = document.createElement("span");
+        arrow.className = "gear-arrow";
+        arrow.setAttribute("aria-hidden", "true");
+        arrow.textContent = "→";
+
+        const slots = document.createElement("div");
+        slots.className = "gear-slots";
+        profile.slots.forEach((slot, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `imbue-slot${slot ? " slot-filled" : ""}`;
+          button.dataset.slotKey = key;
+          button.dataset.slotIndex = String(index);
+          const imbuement = slot ? imbuementById.get(slot.imbuementId) : null;
+          button.setAttribute("aria-label", slot
+            ? `Editar ${imbuement.name} ${tierOptions[slot.tier].name}, ${gearItem.label}, slot ${index + 1}`
+            : `Configurar imbuement, ${gearItem.label}, slot ${index + 1}`);
+          if (slot) {
+            const imbueName = document.createElement("span");
+            imbueName.className = "slot-imbue-name";
+            imbueName.textContent = imbuement.name;
+            const tierName = document.createElement("span");
+            tierName.className = "slot-index";
+            tierName.textContent = `${tierOptions[slot.tier].name} · ${index + 1}`;
+            button.append(imbueName, tierName);
+          } else {
+            const plus = document.createElement("span");
+            plus.className = "slot-plus";
+            plus.setAttribute("aria-hidden", "true");
+            plus.textContent = "+";
+            button.append(plus);
+          }
+          slots.append(button);
+        });
+        row.append(title, arrow, slots);
+        return row;
+      }
+
+      function renderEquipment() {
+        const tabs = document.querySelector("#category-tabs");
+        tabs.replaceChildren(...categoryTabs.map((category) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "category-tab";
+          button.role = "tab";
+          button.dataset.category = category.id;
+          button.setAttribute("aria-selected", String(activeCategory === category.id));
+          button.textContent = category.label;
+          return button;
+        }));
+
+        const picker = document.querySelector("#weapon-picker");
+        picker.hidden = activeCategory !== "weapon";
+        if (activeCategory === "weapon") {
+          const weaponSelect = document.createElement("select");
+          weaponSelect.className = "gear-select";
+          weaponSelect.id = "weapon-select";
+          weaponSelect.setAttribute("aria-label", "Selecionar arma");
+          state.weapons.forEach((weapon) => {
+            const option = document.createElement("option");
+            option.value = String(weapon.id);
+            option.textContent = weapon.name || `Weapon ${weapon.id}`;
+            weaponSelect.append(option);
+          });
+          weaponSelect.value = String(selectedWeaponId);
+          const add = document.createElement("button");
+          add.type = "button";
+          add.className = "icon-button";
+          add.dataset.addWeapon = "true";
+          add.setAttribute("aria-label", "Adicionar arma");
+          add.title = "Adicionar arma";
+          add.textContent = "+";
+          picker.replaceChildren(weaponSelect, add);
+          if (state.weapons.length > 1) {
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "weapon-remove";
+            remove.dataset.removeWeapon = String(selectedWeaponId);
+            remove.setAttribute("aria-label", "Remover arma selecionada");
+            remove.title = "Remover arma";
+            remove.textContent = "×";
+            picker.append(remove);
+          }
+        } else {
+          picker.replaceChildren();
+        }
+
+        document.querySelector("#gold-token-price").value = state.goldTokenPrice ?? "";
+        document.querySelector("#plasma-vocation").value = state.plasmaVocation;
+        const key = activeProfileKey();
+        const profile = profileFor(key);
+        document.querySelector("#active-equipment").replaceChildren(
+          key === "amulet" || key === "ring" ? renderJewelryPanel(key, profile) : createGearRow(key, profile)
+        );
+        updateSummary();
+      }
+
+      function slotContextLabel(key, index) {
+        const gearItem = gearItemFor(key);
+        return `${gearItem.label} · Slot ${index + 1}`;
+      }
+
+      function captureDraftPrices() {
+        document.querySelectorAll("[data-ingredient-price]").forEach((input) => {
+          modalDraft.prices[input.dataset.ingredientPrice] = input.value;
+        });
+      }
+
+      function selectedTier() {
+        return Number(slotForm.querySelector('input[name="tier"]:checked')?.value || 0);
+      }
+
+      function currentModalImbuement() {
+        return imbuementById.get(imbuementSelect.value);
+      }
+
+      function renderModalDetails() {
+        const imbuement = currentModalImbuement();
+        const tier = selectedTier();
+        if (!imbuement) return;
+        document.querySelector("#tier-bonus").textContent = imbuement.bonuses[tier].map((bonus) => {
+          const value = `${bonus.sign ? "+" : ""}${formatNumber(bonus.value)}${bonus.unit.startsWith("%") ? "" : " "}${bonus.unit}`;
+          return value.trim();
+        }).join(" · ");
+        document.querySelector("#tier-fee").textContent = formatGp(tierOptions[tier].fee);
+        const recipeList = document.querySelector("#recipe-list");
+        recipeList.replaceChildren();
+        imbuement.recipes[tier].forEach((ingredient) => {
+          const row = document.createElement("div");
+          row.className = "recipe-row";
+          const name = document.createElement("span");
+          name.className = "ingredient-name";
+          name.textContent = ingredient.name;
+          const quantity = document.createElement("span");
+          quantity.className = "ingredient-quantity";
+          quantity.textContent = String(ingredient.quantity);
+          const price = document.createElement("input");
+          price.className = "price-input";
+          price.type = "number";
+          price.min = "0";
+          price.step = "any";
+          price.inputMode = "decimal";
+          price.placeholder = "GP por unidade";
+          price.dataset.ingredientPrice = ingredient.id;
+          price.setAttribute("aria-label", `Preço unitário de ${ingredient.name} em GP`);
+          price.value = modalDraft.prices[ingredient.id] ?? state.itemPrices[ingredient.id] ?? "";
+          row.append(name, quantity, price);
+          recipeList.append(row);
+        });
+        const comparison = document.querySelector("#token-comparison");
+        const canCompare = canUseGoldTokens(imbuement, tier);
+        comparison.hidden = !canCompare;
+        const paymentMethod = document.querySelector("#payment-method");
+        if (canCompare) {
+          const tokenOption = paymentMethod.querySelector('option[value="gold-token"]');
+          tokenOption.disabled = state.goldTokenPrice === null;
+          tokenOption.textContent = `${goldTokensPerTier[tier]} Gold Tokens`;
+          if (modalDraft.paymentMethod === "gold-token" && state.goldTokenPrice === null) {
+            modalDraft.paymentMethod = "items";
+          }
+          paymentMethod.value = modalDraft.paymentMethod;
+          updateTokenComparison();
+        } else {
+          modalDraft.paymentMethod = "items";
+        }
+        document.querySelector("#recipe-error").textContent = "";
+      }
+
+      function updateTokenComparison() {
+        const imbuement = currentModalImbuement();
+        if (!imbuement || !canUseGoldTokens(imbuement, selectedTier())) return;
+        const tier = selectedTier();
+        const paymentMethod = document.querySelector("#payment-method");
+        const tokenOption = paymentMethod.querySelector('option[value="gold-token"]');
+        tokenOption.disabled = state.goldTokenPrice === null;
+        tokenOption.textContent = `${goldTokensPerTier[tier]} Gold Tokens`;
+        if (state.goldTokenPrice === null && modalDraft.paymentMethod === "gold-token") {
+          modalDraft.paymentMethod = "items";
+          paymentMethod.value = "items";
+        }
+        const prices = { ...modalDraft.prices };
+        document.querySelectorAll("[data-ingredient-price]").forEach((input) => {
+          prices[input.dataset.ingredientPrice] = input.value;
+        });
+        const details = document.querySelector("#token-comparison-details");
+        details.textContent = tierOptions.map((option, tierIndex) => {
+          const recipe = imbuement.recipes[tierIndex];
+          const missing = recipe.filter((ingredient) => {
+            const price = prices[ingredient.id];
+            return price === undefined || String(price).trim() === "" || !Number.isFinite(Number(price)) || Number(price) < 0;
+          });
+          if (missing.length > 0) {
+            return `${option.name}: informe ${missing.map(({ name }) => name).join(", ")}.`;
+          }
+          const itemsCost = option.fee + recipe.reduce((sum, item) => sum + item.quantity * Number(prices[item.id]), 0);
+          if (state.goldTokenPrice === null) {
+            return `${option.name}: itens ${formatGp(itemsCost)} · informe o valor do Gold Token.`;
+          }
+          const tokenCost = option.fee + goldTokensPerTier[tierIndex] * state.goldTokenPrice;
+          const recommendation = tokenCost < itemsCost ? "Gold Tokens compensam." : tokenCost > itemsCost
+            ? "Os itens compensam."
+            : "Custos iguais.";
+          return `${option.name}: itens ${formatGp(itemsCost)} · ${goldTokensPerTier[tierIndex]} Gold Tokens ${formatGp(tokenCost)} — ${recommendation}`;
+        }).join("\n");
+      }
+
+      function openSlot(key, index) {
+        const profile = profileFor(key);
+        const slot = profile.slots[index];
+        const choices = eligibleImbuements(key, index);
+        if (slot && !choices.some((imbuement) => imbuement.id === slot.imbuementId)) {
+          choices.unshift(imbuementById.get(slot.imbuementId));
+        }
+        if (choices.length === 0) return;
+        modalContext = { key, index };
+        modalDraft = {
+          imbuementId: slot?.imbuementId || choices[0].id,
+          tier: slot?.tier ?? 0,
+          prices: { ...(slot?.prices || {}), ...state.itemPrices },
+          paymentMethod: slot?.paymentMethod === "gold-token" ? "gold-token" : "items"
+        };
+        document.querySelector("#modal-context").textContent = slotContextLabel(key, index);
+        document.querySelector("#modal-title").textContent = slot ? "Editar imbuement" : "Configurar imbuement";
+        imbuementSelect.replaceChildren();
+        choices.forEach((imbuement) => {
+          const option = document.createElement("option");
+          option.value = imbuement.id;
+          option.textContent = imbuement.name;
+          imbuementSelect.append(option);
+        });
+        imbuementSelect.value = modalDraft.imbuementId;
+        slotForm.querySelectorAll('input[name="tier"]').forEach((radio) => { radio.checked = Number(radio.value) === modalDraft.tier; });
+        document.querySelector("#clear-slot").hidden = !slot;
+        renderModalDetails();
+        modal.showModal();
+      }
+
+      document.querySelector("#category-tabs").addEventListener("click", (event) => {
+        const tab = event.target.closest("[data-category]");
+        if (!tab) return;
+        activeCategory = tab.dataset.category;
+        renderEquipment();
+      });
+
+      document.querySelector("#active-equipment").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-slot-key]");
+        if (button) openSlot(button.dataset.slotKey, Number(button.dataset.slotIndex));
+      });
+
+      document.querySelector("#active-equipment").addEventListener("change", (event) => {
+        const jewelryMode = event.target.closest('[data-jewelry-property="jewelryMode"]');
+        if (jewelryMode) {
+          const profile = profileFor(activeCategory);
+          profile.jewelryMode = jewelryMode.value === "plasma" ? "plasma" : "silver-token";
+          saveState();
+          updateJewelryPanel(activeCategory, profile);
+          updateSummary();
+          return;
+        }
+        const select = event.target.closest("[data-profile-property]");
+        if (!select) return;
+        const key = select.dataset.profileKey;
+        const profile = profileFor(key);
+        if (select.dataset.profileProperty === "type") {
+          profile.type = select.value;
+          saveState();
+          renderEquipment();
+        }
+      });
+
+      document.querySelector("#active-equipment").addEventListener("input", (event) => {
+        const tokenInput = event.target.closest("[data-silver-token-property]");
+        if (tokenInput) {
+          const profile = profileFor(activeCategory);
+          const property = tokenInput.dataset.silverTokenProperty;
+          if (property === "silverTokenUnitPrice") {
+            const rawPrice = tokenInput.value.trim();
+            const price = Number(rawPrice);
+            state.silverTokenUnitPrice = rawPrice !== "" && Number.isFinite(price) && price >= 0 ? price : null;
+          } else {
+            profile.silverTokenQuantity = Math.min(5, Math.max(1, Math.trunc(Number(tokenInput.value) || 1)));
+            tokenInput.value = String(profile.silverTokenQuantity);
+          }
+          saveState();
+          updateJewelryPanel(activeCategory, profile);
+          updateSummary();
+          return;
+        }
+        const plasmaInput = event.target.closest("[data-plasma-property]");
+        if (plasmaInput) {
+          const profile = profileFor(activeCategory);
+          const plasma = profile.plasmaPrices[plasmaInput.dataset.vocation];
+          const rawValue = plasmaInput.value.trim();
+          const value = Number(rawValue);
+          const property = plasmaInput.dataset.plasmaProperty;
+          plasma.price = rawValue !== ""
+            && Number.isFinite(value)
+            && value >= 0
+            ? value
+            : null;
+          saveState();
+          updateJewelryPanel(activeCategory, profile);
+          updateSummary();
+          return;
+        }
+        const input = event.target.closest("[data-weapon-name]");
+        if (!input) return;
+        const profile = state.weapons.find((weapon) => weapon.id === Number(input.dataset.weaponName));
+        if (profile) {
+          profile.name = input.value;
+          const option = document.querySelector(`#weapon-select option[value="${profile.id}"]`);
+          if (option) option.textContent = profile.name || `Weapon ${profile.id}`;
+          saveState();
+        }
+      });
+
+      document.querySelector("#gold-token-price").addEventListener("input", (event) => {
+        const rawPrice = event.target.value.trim();
+        const price = Number(rawPrice);
+        state.goldTokenPrice = rawPrice !== "" && Number.isFinite(price) && price >= 0 ? price : null;
+        saveState();
+        updateSummary();
+        updateTokenComparison();
+      });
+
+      document.querySelector("#plasma-vocation").addEventListener("change", (event) => {
+        state.plasmaVocation = vocations.some(({ id }) => id === event.target.value) ? event.target.value : "knight";
+        saveState();
+        updateSummary();
+        updateJewelryPanel(activeCategory, profileFor(activeCategory));
+      });
+
+      document.querySelector("#weapon-picker").addEventListener("change", (event) => {
+        if (event.target.id !== "weapon-select") return;
+        selectedWeaponId = Number(event.target.value);
+        renderEquipment();
+      });
+
+      document.querySelector("#weapon-picker").addEventListener("click", (event) => {
+        if (event.target.closest("[data-add-weapon]")) {
+          const id = state.nextWeaponId++;
+          state.weapons.push({ id, name: `Weapon ${id}`, type: "sword", ...emptyProfile(3) });
+          selectedWeaponId = id;
+          activeCategory = "weapon";
+          saveState();
+          renderEquipment();
+          return;
+        }
+        const remove = event.target.closest("[data-remove-weapon]");
+        if (!remove || state.weapons.length < 2) return;
+        state.weapons = state.weapons.filter((weapon) => weapon.id !== Number(remove.dataset.removeWeapon));
+        selectedWeaponId = state.weapons[0].id;
+        saveState();
+        renderEquipment();
+      });
+
+      imbuementSelect.addEventListener("change", () => {
+        captureDraftPrices();
+        modalDraft.imbuementId = imbuementSelect.value;
+        renderModalDetails();
+      });
+
+      document.querySelector("#recipe-list").addEventListener("input", (event) => {
+        const input = event.target.closest("[data-ingredient-price]");
+        if (!input) return;
+        const itemId = input.dataset.ingredientPrice;
+        const rawPrice = input.value.trim();
+        modalDraft.prices[itemId] = rawPrice;
+        if (rawPrice === "") {
+          delete state.itemPrices[itemId];
+        } else if (Number.isFinite(Number(rawPrice)) && Number(rawPrice) >= 0) {
+          state.itemPrices[itemId] = Number(rawPrice);
+        }
+        saveState();
+        updateTokenComparison();
+      });
+
+      document.querySelector("#payment-method").addEventListener("change", (event) => {
+        modalDraft.paymentMethod = event.target.value;
+      });
+
+      slotForm.querySelectorAll('input[name="tier"]').forEach((radio) => {
+        radio.addEventListener("change", () => {
+          captureDraftPrices();
+          modalDraft.tier = selectedTier();
+          renderModalDetails();
+        });
+      });
+
+      slotForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        captureDraftPrices();
+        const imbuement = currentModalImbuement();
+        const tier = selectedTier();
+        const recipe = imbuement.recipes[tier];
+        const missingPrice = recipe.find((ingredient) => {
+          const rawPrice = modalDraft.prices[ingredient.id];
+          return rawPrice === undefined || String(rawPrice).trim() === "" || !Number.isFinite(Number(rawPrice)) || Number(rawPrice) < 0;
+        });
+        if (missingPrice && modalDraft.paymentMethod !== "gold-token") {
+          const input = document.querySelector(`[data-ingredient-price="${missingPrice.id}"]`);
+          document.querySelector("#recipe-error").textContent = `Informe um preço válido para ${missingPrice.name}.`;
+          input?.focus();
+          return;
+        }
+        const prices = Object.fromEntries(recipe.flatMap((ingredient) => {
+          const rawPrice = modalDraft.prices[ingredient.id];
+          if (rawPrice === undefined || String(rawPrice).trim() === "" || !Number.isFinite(Number(rawPrice)) || Number(rawPrice) < 0) {
+            return [];
+          }
+          const price = Number(rawPrice);
+          state.itemPrices[ingredient.id] = price;
+          return [[ingredient.id, price]];
+        }));
+        if (modalDraft.paymentMethod === "gold-token" && (!canUseGoldTokens(imbuement, tier) || state.goldTokenPrice === null)) {
+          document.querySelector("#recipe-error").textContent = "Informe um valor válido de Gold Token para usar essa opção.";
+          return;
+        }
+        profileFor(modalContext.key).slots[modalContext.index] = {
+          imbuementId: imbuement.id,
+          tier,
+          prices,
+          paymentMethod: modalDraft.paymentMethod
+        };
+        saveState();
+        modal.close();
+        renderEquipment();
+      });
+
+      document.querySelector("#clear-slot").addEventListener("click", () => {
+        if (!modalContext) return;
+        profileFor(modalContext.key).slots[modalContext.index] = null;
+        saveState();
+        modal.close();
+        renderEquipment();
+      });
+
+      document.querySelector("#close-modal").addEventListener("click", () => modal.close());
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) modal.close();
+      });
+
+      const plasmaVocationSelect = document.querySelector("#plasma-vocation");
+      vocations.forEach(({ id, label }) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = label;
+        plasmaVocationSelect.append(option);
+      });
+      renderEquipment();
+    })();
+  </script>
+</body>
+</html>
